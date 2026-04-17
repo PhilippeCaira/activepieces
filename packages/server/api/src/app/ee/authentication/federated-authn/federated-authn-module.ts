@@ -24,6 +24,7 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         return federatedAuthnService(req.log).login({
             platformId: platformId ?? undefined,
+            providerName: req.query.providerName,
         })
     })
 
@@ -32,6 +33,7 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
         const response = await federatedAuthnService(req.log).claim({
             platformId: platformId ?? undefined,
             code: req.body.code,
+            providerName: req.body.providerName,
         })
         applicationEvents(req.log).sendUserEvent({
             platformId: response.platformId!,
