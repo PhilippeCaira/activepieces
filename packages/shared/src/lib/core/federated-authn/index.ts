@@ -35,10 +35,18 @@ export const SAMLAuthnProviderConfig = z.object({
 })
 export type SAMLAuthnProviderConfig = z.infer<typeof SAMLAuthnProviderConfig>
 
+export const OidcAuthnProviderConfig = z.object({
+    issuer: z.string(),
+    clientId: z.string(),
+    clientSecret: z.string(),
+})
+export type OidcAuthnProviderConfig = z.infer<typeof OidcAuthnProviderConfig>
+
 export const FederatedAuthnProviderConfig = z.object({
     google: Nullable(GoogleAuthnProviderConfig),
     github: Nullable(GithubAuthnProviderConfig),
     saml: Nullable(SAMLAuthnProviderConfig),
+    oidc: Nullable(OidcAuthnProviderConfig),
 })
 export type FederatedAuthnProviderConfig = z.infer<typeof FederatedAuthnProviderConfig>
 
@@ -46,6 +54,7 @@ export const FederatedAuthnProviderConfigWithoutSensitiveData = z.object({
     google: Nullable(GoogleAuthnProviderConfig.pick({ clientId: true })),
     github: Nullable(GithubAuthnProviderConfig.pick({ clientId: true })),
     saml: Nullable(z.object({})),
+    oidc: Nullable(OidcAuthnProviderConfig.pick({ issuer: true, clientId: true })),
 })
 
 export type FederatedAuthnProviderConfigWithoutSensitiveData = z.infer<typeof FederatedAuthnProviderConfigWithoutSensitiveData>
