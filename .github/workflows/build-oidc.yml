@@ -1,0 +1,62 @@
+name: Build & push OIDC image
+
+on:
+  push:
+    branches: [oidc]
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository_owner }}/activepieces-oidc
+  UPSTREAM: activepieces/activepieces
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: oidc
+          fetch-depth: 0
+
+      - name: Sync with upstream
+        if: github.event_name == 'schedule'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/${{ env.UPSTREAM }}.git || true
+          git fetch upstream main
+          if git rebase upstream/main; then
+            git push origin oidc --force-with-lease
+            echo "SYNCED=true" >> $GITHUB_ENV
+          else
+            git rebase --abort
+            echo "::warning::Rebase failed — manual intervention needed"
+            echo "SYNCED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Detect version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Detected version: ${VERSION}"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
