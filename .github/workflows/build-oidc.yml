@@ -40,10 +40,13 @@ jobs:
             echo "SYNCED=false" >> $GITHUB_ENV
           fi
 
+      - name: Lowercase image name
+        run: echo "IMAGE_LC=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Detect version
         id: version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node -p "require('./package.json').version" || echo "0.0.0")
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Detected version: ${VERSION}"
 
@@ -58,5 +61,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.version.outputs.version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_LC }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_LC }}:latest
