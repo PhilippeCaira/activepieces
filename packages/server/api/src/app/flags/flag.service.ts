@@ -156,7 +156,9 @@ export const flagService = (log: FastifyBaseLogger) => ({
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-                value: {},
+                value: {
+                    ...(!isNil(system.get(AppSystemProp.OIDC_ISSUER)) ? { oidc: true } : {}),
+                },
                 created,
                 updated,
             },
