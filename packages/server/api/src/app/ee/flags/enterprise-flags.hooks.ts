@@ -1,6 +1,7 @@
 import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
 import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
@@ -17,6 +18,14 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                     [ThirdPartyAuthnProviderEnum.GOOGLE]: true,
+                }
+            }
+            // OIDC via env vars (self-hosted sans platform)
+            if (!isNil(system.get(AppSystemProp.OIDC_ISSUER))) {
+                const existing = (modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] ?? {}) as Record<string, boolean>
+                modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
+                    ...existing,
+                    [ThirdPartyAuthnProviderEnum.OIDC]: true,
                 }
             }
             return modifiedFlags
