@@ -325,6 +325,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
+            await app.register(federatedAuthModule)
             break
     }
 
