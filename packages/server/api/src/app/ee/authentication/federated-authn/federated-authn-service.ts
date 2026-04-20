@@ -115,16 +115,20 @@ async function getGoogleClientIdAndSecret(platformId: string | undefined, log: F
 }
 
 async function getOidcConfig(platformId: string | undefined, log: FastifyBaseLogger) {
+    const envConfig = () => ({
+        issuer: system.getOrThrow(AppSystemProp.OIDC_ISSUER),
+        clientId: system.getOrThrow(AppSystemProp.OIDC_CLIENT_ID),
+        clientSecret: system.getOrThrow(AppSystemProp.OIDC_CLIENT_SECRET),
+    })
     if (isNil(platformId)) {
-        return {
-            issuer: system.getOrThrow(AppSystemProp.OIDC_ISSUER),
-            clientId: system.getOrThrow(AppSystemProp.OIDC_CLIENT_ID),
-            clientSecret: system.getOrThrow(AppSystemProp.OIDC_CLIENT_SECRET),
-        }
+        return envConfig()
     }
     const platform = await platformService(log).getOneOrThrow(platformId)
-    const oidcConfig = platform.federatedAuthProviders.oidc
-    assertNotNullOrUndefined(oidcConfig, 'OIDC configuration is not defined')
+    const oidcConfig = platform.federatedAuthProviders?.oidc
+    if (isNil(oidcConfig)) {
+        // Self-hosted community: per-platform config not set, fall back to env vars
+        return envConfig()
+    }
     return {
         issuer: oidcConfig.issuer,
         clientId: oidcConfig.clientId,
