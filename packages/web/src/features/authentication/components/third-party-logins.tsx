@@ -8,6 +8,7 @@ import React from 'react';
 
 import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
+import OidcIcon from '@/assets/img/custom/auth/oidc.svg';
 import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -74,6 +75,20 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
           {isSignUp
             ? `${t(`Sign up With`)} ${t('SAML')}`
             : `${t(`Sign in With`)} ${t('SAML')}`}
+        </Button>
+      )}
+      {thirdPartyAuthProviders?.oidc && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={(e) =>
+            handleProviderClick(e, ThirdPartyAuthnProviderEnum.OIDC)
+          }
+        >
+          <ThirdPartyIcon icon={OidcIcon} />
+          {isSignUp
+            ? `${t(`Sign up With`)} ${t('SSO')}`
+            : `${t(`Sign in With`)} ${t('SSO')}`}
         </Button>
       )}
     </div>
