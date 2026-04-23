@@ -3,7 +3,7 @@ import path from 'path';
 
 import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import checker from 'vite-plugin-checker';
 import tailwindcss from '@tailwindcss/vite';
 import customHtmlPlugin from './vite-plugins/html-plugin';
@@ -14,9 +14,19 @@ export default defineConfig(({ command, mode }) => {
   const AP_TITLE = 'Activepieces';
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
+  // Fork OIDC : force VITE_AP_OIDC_AUTO_REDIRECT à être littéralement inlined
+  // dans le bundle, sinon Vite tree-shake la branche conditionnelle au build
+  // prod (DCE sur import.meta.env.X quand X n'est pas statiquement connu).
+  const env = loadEnv(mode, process.cwd(), '');
+
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/web',
+    define: {
+      'import.meta.env.VITE_AP_OIDC_AUTO_REDIRECT': JSON.stringify(
+        env.VITE_AP_OIDC_AUTO_REDIRECT || 'false',
+      ),
+    },
     server: {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
