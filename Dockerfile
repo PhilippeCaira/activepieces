@@ -70,6 +70,11 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
+# Fork OIDC : inject VITE_AP_OIDC_AUTO_REDIRECT au build time pour que le
+# frontend auto-déclenche le flow SSO au mount de la sign-in page.
+ARG VITE_AP_OIDC_AUTO_REDIRECT=true
+ENV VITE_AP_OIDC_AUTO_REDIRECT=${VITE_AP_OIDC_AUTO_REDIRECT}
+
 # Build frontend, engine, server API, and worker
 RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 

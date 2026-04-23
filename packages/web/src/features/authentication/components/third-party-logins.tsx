@@ -4,7 +4,7 @@ import {
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+
+// Fork OIDC : déclenche automatiquement le flow SSO si l'env Vite
+// VITE_AP_OIDC_AUTO_REDIRECT=true et le user n'a pas déjà d'en-tête
+// local=1 dans la querystring (escape hatch pour debug admin).
+const AUTO_OIDC_REDIRECT =
+  (import.meta as unknown as { env?: Record<string, string> }).env
+    ?.VITE_AP_OIDC_AUTO_REDIRECT === 'true';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -45,6 +52,31 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     }
     thirdPartyLogin(loginUrl, providerName);
   };
+
+  // Fork OIDC : déclenche le flow OIDC automatiquement au mount si
+  // AUTO_OIDC_REDIRECT et provider OIDC disponible. Évite aux users déjà
+  // loggés dans Zitadel d'avoir à cliquer. Escape hatch : ?local=1.
+  const hasAutoTriggered = useRef(false);
+  useEffect(() => {
+    if (!AUTO_OIDC_REDIRECT) return;
+    if (hasAutoTriggered.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('local') === '1') return;
+    if (!thirdPartyAuthProviders?.oidc) return;
+    if (!thirdPartyRedirectUrl) return;
+    hasAutoTriggered.current = true;
+    (async () => {
+      try {
+        const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
+          ThirdPartyAuthnProviderEnum.OIDC,
+        );
+        if (loginUrl) thirdPartyLogin(loginUrl, ThirdPartyAuthnProviderEnum.OIDC);
+      } catch {
+        // silent fail — l'user cliquera le bouton manuellement
+      }
+    })();
+  }, [thirdPartyAuthProviders?.oidc, thirdPartyRedirectUrl, thirdPartyLogin]);
 
   const signInWithSaml = () =>
     (window.location.href = '/api/v1/authn/saml/login');
