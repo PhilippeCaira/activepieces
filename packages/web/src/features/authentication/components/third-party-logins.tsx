@@ -18,9 +18,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 // Fork OIDC : déclenche automatiquement le flow SSO si l'env Vite
 // VITE_AP_OIDC_AUTO_REDIRECT=true et le user n'a pas déjà d'en-tête
 // local=1 dans la querystring (escape hatch pour debug admin).
+// Accès direct sans cast TS pour que Vite define matche littéralement.
 const AUTO_OIDC_REDIRECT =
-  (import.meta as unknown as { env?: Record<string, string> }).env
-    ?.VITE_AP_OIDC_AUTO_REDIRECT === 'true';
+  import.meta.env.VITE_AP_OIDC_AUTO_REDIRECT === 'true';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;

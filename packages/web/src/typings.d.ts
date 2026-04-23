@@ -1,3 +1,9 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_AP_OIDC_AUTO_REDIRECT?: string;
+}
+
 declare module '*.module.css' {
   const classes: { readonly [key: string]: string };
   export default classes;

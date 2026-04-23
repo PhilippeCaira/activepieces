@@ -17,15 +17,19 @@ export default defineConfig(({ command, mode }) => {
   // Fork OIDC : force VITE_AP_OIDC_AUTO_REDIRECT à être littéralement inlined
   // dans le bundle, sinon Vite tree-shake la branche conditionnelle au build
   // prod (DCE sur import.meta.env.X quand X n'est pas statiquement connu).
+  // On lit process.env en priorité (ENV Docker) puis les .env files (fallback),
+  // car loadEnv ne lit pas les env runtime par défaut.
   const env = loadEnv(mode, process.cwd(), '');
+  const autoRedirect =
+    process.env.VITE_AP_OIDC_AUTO_REDIRECT ??
+    env.VITE_AP_OIDC_AUTO_REDIRECT ??
+    'false';
 
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/web',
     define: {
-      'import.meta.env.VITE_AP_OIDC_AUTO_REDIRECT': JSON.stringify(
-        env.VITE_AP_OIDC_AUTO_REDIRECT || 'false',
-      ),
+      'import.meta.env.VITE_AP_OIDC_AUTO_REDIRECT': JSON.stringify(autoRedirect),
     },
     server: {
       // allowedHosts: ['wozcsvaint.loclx.io'],
