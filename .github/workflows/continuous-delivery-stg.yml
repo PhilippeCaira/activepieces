@@ -80,12 +80,12 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: depot/setup-action@v1
-      - uses: depot/build-push-action@v1
+          password: ${{ secrets.CR_PAT }}
+      # Fork perso : pas d'accès au projet Depot upstream (du7O4b0e8P).
+      # On utilise docker/build-push-action standard, push vers GHCR perso.
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
         with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
           platforms: |
@@ -93,11 +93,13 @@ jobs:
             linux/arm64
           push: true
           no-cache: true
-          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          tags: ghcr.io/philippecaira/activepieces-cloud-stg:${{ steps.set-tag.outputs.image_tag }}
 
   deploy-staging:
     needs: build-image
-    if: always() && needs.build-image.result == 'success'
+    # Skip sur les forks personnels — secrets SSH (DEV_OPS_*, SSH_PRIVATE_KEY)
+    # appartiennent au serveur staging de l'org activepieces.
+    if: github.repository_owner != 'PhilippeCaira' && always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -129,7 +131,9 @@ jobs:
   # lookup returns the hotfix version.sha.beta which gets retagged as release-candidate.
   tag-release-candidate:
     needs: [detect-hotfix-merge, deploy-staging]
+    # Skip sur les forks personnels — dépend du deploy-staging SSH.
     if: |
+      github.repository_owner != 'PhilippeCaira' &&
       always() &&
       (github.event_name == 'schedule' ||
        (github.event_name == 'push' && needs.detect-hotfix-merge.outputs.is_hotfix_merge == 'true' &&

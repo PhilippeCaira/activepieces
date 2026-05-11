@@ -8,6 +8,9 @@ on:
 jobs:
   sync:
     name: Update BetterStack Playwright monitor
+    # Skip sur les forks personnels — secret BETTERSTACK_API_TOKEN appartient
+    # à l'org activepieces.
+    if: github.repository_owner != 'PhilippeCaira'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
